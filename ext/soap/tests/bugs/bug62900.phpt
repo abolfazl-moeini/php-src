@@ -44,20 +44,15 @@ $combinations = [
     [$wsdl_without_ns, $xsd_without_ns],
 ];
 
-chdir(__DIR__);
+$php = realpath(getenv('TEST_PHP_EXECUTABLE') ?: PHP_BINARY) ?: PHP_BINARY;
 
-$args = ["-d", "display_startup_errors=0", "-d", "extension_dir=" . ini_get("extension_dir"), "-d", "extension=" . (substr(PHP_OS, 0, 3) == "WIN" ? "php_" : "") . "soap." . PHP_SHLIB_SUFFIX];
-if (php_ini_loaded_file()) {
-    // Necessary such that it works from a development directory in which case extension_dir might not be the real extension dir
-    $args[] = "-c";
-    $args[] = php_ini_loaded_file();
-}
+chdir(__DIR__);
 
 foreach ($combinations as list($wsdl, $xsd)) {
     file_put_contents(__DIR__."/bug62900.wsdl", $wsdl);
     file_put_contents(__DIR__."/bug62900.xsd", $xsd);
 
-    $proc = proc_open([PHP_BINARY, ...$args, __DIR__.'/bug62900_run'], [1 => ["pipe", "w"], 2 => ["pipe", "w"]], $pipes);
+    $proc = proc_open([$php, __DIR__.'/bug62900_run'], [1 => ["pipe", "w"], 2 => ["pipe", "w"]], $pipes);
     echo stream_get_contents($pipes[1]);
     fclose($pipes[1]);
     proc_close($proc);
