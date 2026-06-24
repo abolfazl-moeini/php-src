@@ -50,9 +50,19 @@ static inline double php_intpow10(int power) {
 
 static zend_always_inline double php_round_get_basic_edge_case(double integral, double exponent, int places)
 {
+	double half = copysign(0.5, integral);
+	double sum = integral + half;
+
+	if (UNEXPECTED(sum == integral)) {
+		double unscaled = (places > 0)
+			? fabs(integral / exponent)
+			: fabs(integral * exponent);
+		return nextafter(unscaled, INFINITY);
+	}
+
 	return (places > 0)
-		? fabs((integral + copysign(0.5, integral)) / exponent)
-		: fabs((integral + copysign(0.5, integral)) * exponent);
+		? fabs(sum / exponent)
+		: fabs(sum * exponent);
 }
 
 static zend_always_inline double php_round_get_zero_edge_case(double integral, double exponent, int places)
